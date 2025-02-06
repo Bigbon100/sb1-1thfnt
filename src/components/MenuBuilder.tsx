@@ -3,13 +3,15 @@ import { Trash2 } from 'lucide-react';
 import { useMenuItems } from '../hooks/useMenuItems';
 import { useCategorySelection } from '../hooks/useCategorySelection';
 import { CategorySelect } from './CategorySelect';
-import { PresetItemSelect } from './menu/PresetItemSelect';
+import { DishGrid } from './menu/DishGrid';
 import { MenuItemsList } from './menu/MenuItemsList';
 import { PriceCalculation } from './PriceCalculation';
 import { CustomerForm } from './CustomerForm';
 import { SaveMenuButton } from './SaveMenuButton';
+import { Notification } from './Notification';
 import { calculateTotalPrice } from '../utils/priceCalculator';
 import type { CustomerInfo } from '../types/customer';
+import type { MenuItem } from '../types';
 
 export default function MenuBuilder() {
   const { selectedItems, availableItems, loading, error, addItem, removeItem } = useMenuItems();
@@ -27,6 +29,8 @@ export default function MenuBuilder() {
     date: '',
     hasDeliveryAddress: false
   });
+
+  const [notification, setNotification] = useState<string | null>(null);
 
   const priceCalculation = calculateTotalPrice(selectedItems);
 
@@ -53,9 +57,30 @@ export default function MenuBuilder() {
     }
   };
 
+  const handleAddItem = (item: MenuItem) => {
+    addItem(item);
+    setNotification(`${item.name} wurde zum Menü hinzugefügt!`);
+  };
+
+  const filteredDishes = availableItems.filter(item => {
+    if (item.category !== selectedCategory) return false;
+    if (!item.subcategory) return true;
+    if (selectedSubcategory) {
+      return item.subcategory === selectedSubcategory;
+    }
+    return false;
+  });
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-purple-50 to-purple-100 p-6">
-      <div className="max-w-4xl mx-auto bg-white rounded-xl shadow-lg p-8">
+      {notification && (
+        <Notification
+          message={notification}
+          onClose={() => setNotification(null)}
+        />
+      )}
+      
+      <div className="max-w-7xl mx-auto bg-white rounded-xl shadow-lg p-8">
         <div className="flex flex-col items-center mb-8">
           <img 
             src="https://image.jimcdn.com/app/cms/image/transf/dimension=400x10000:format=jpg/path/s50681800bfbfa8e4/image/i6901015a271efa6e/version/1676479330/image.jpg" 
@@ -71,22 +96,30 @@ export default function MenuBuilder() {
           onClearCustomerInfo={handleClearCustomerInfo}
         />
         
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-          <div className="space-y-6">
-            <div className="space-y-4">
-              <h2 className="text-xl font-semibold text-purple-700">Gerichte auswählen</h2>
-              <CategorySelect
-                selectedCategory={selectedCategory}
-                selectedSubcategory={selectedSubcategory}
-                onCategoryChange={handleCategoryChange}
-                onSubcategoryChange={handleSubcategoryChange}
+        <div className="space-y-8">
+          <div className="space-y-4">
+            <h2 className="text-xl font-semibold text-purple-700">Gerichte auswählen</h2>
+            <CategorySelect
+              selectedCategory={selectedCategory}
+              selectedSubcategory={selectedSubcategory}
+              onCategoryChange={handleCategoryChange}
+              onSubcategoryChange={handleSubcategoryChange}
+            />
+            {loading ? (
+              <div className="text-center py-8">
+                <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-purple-600 mx-auto"></div>
+                <p className="mt-4 text-purple-600">Lade Gerichte...</p>
+              </div>
+            ) : error ? (
+              <div className="text-center py-8 text-red-600">
+                Fehler beim Laden der Gerichte: {error.message}
+              </div>
+            ) : (
+              <DishGrid
+                dishes={filteredDishes}
+                onSelect={handleAddItem}
               />
-              <PresetItemSelect
-                selectedCategory={selectedCategory}
-                selectedSubcategory={selectedSubcategory}
-                onItemSelect={addItem}
-              />
-            </div>
+            )}
           </div>
 
           <div className="space-y-6">
