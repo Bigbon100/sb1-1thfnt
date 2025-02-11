@@ -15,7 +15,7 @@ export function DishCard({ dish, onSelect }: DishCardProps) {
     setQuantity(1);
   };
 
-  // Default image based on category
+  // Default image based on category if no imageUrl is provided
   const getDefaultImage = (category: string) => {
     switch (category) {
       case 'Vorspeisen':
@@ -36,7 +36,7 @@ export function DishCard({ dish, onSelect }: DishCardProps) {
   return (
     <div className="bg-white rounded-lg shadow-md overflow-hidden hover:shadow-lg transition-shadow">
       <img
-        src={getDefaultImage(dish.category)}
+        src={dish.imageUrl || getDefaultImage(dish.category)}
         alt={dish.name}
         className="w-full h-48 object-cover"
       />

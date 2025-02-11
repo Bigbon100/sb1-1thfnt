@@ -2,6 +2,7 @@ import React from 'react';
 import { CustomerInfo } from '../types/customer';
 import { AddressFields } from './address/AddressFields';
 import { Trash2 } from 'lucide-react';
+import { useSessionStorage } from '../hooks/useSessionStorage';
 
 interface CustomerFormProps {
   customerInfo: CustomerInfo;
@@ -10,24 +11,38 @@ interface CustomerFormProps {
 }
 
 export function CustomerForm({ customerInfo, onCustomerInfoChange, onClearCustomerInfo }: CustomerFormProps) {
+  // Use session storage for form data persistence
+  const [storedInfo, setStoredInfo] = useSessionStorage('customerInfo', customerInfo);
+
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value, type, checked } = e.target;
-    onCustomerInfoChange({
+    const newInfo = {
       ...customerInfo,
       [name]: type === 'checkbox' ? checked : value,
-    });
+    };
+    onCustomerInfoChange(newInfo);
+    setStoredInfo(newInfo);
   };
 
   const handleAddressChange = (field: string, value: string) => {
-    onCustomerInfoChange({
+    const newInfo = {
       ...customerInfo,
       [field]: value,
-    });
+    };
+    onCustomerInfoChange(newInfo);
+    setStoredInfo(newInfo);
   };
 
   const handleClearForm = () => {
     if (window.confirm('Möchten Sie wirklich alle Kundeninformationen löschen?')) {
       onClearCustomerInfo();
+      setStoredInfo({
+        name: '',
+        email: '',
+        phone: '',
+        date: '',
+        hasDeliveryAddress: false
+      });
     }
   };
 
